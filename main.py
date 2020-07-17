@@ -1,6 +1,9 @@
 import random
 from matplotlib import pyplot as plt
 import numpy as np
+import energy_min
+import tqdm
+import time
 
 
 def calc_discrepancy(points):
@@ -30,8 +33,22 @@ def generate_points(n, dimension=2):
 
 if __name__ == "__main__":
     points = generate_points(100)
+    d = calc_discrepancy(list(points))
+    print(f'Discrepancy of 100 random points: {d}')
+
+    grad = np.mean(np.abs(energy_min.gradient(points)))
+    lr = 0.00005
+    print("Approx magnitude of initial change", grad * lr)  # To sanity check the learning rate, should be < 1
+
+    for i in tqdm.tqdm(range(3000)):
+        grad = energy_min.gradient(points)
+        points += -lr * grad
+        points = np.mod(points, 1)
+        if (i + 1) % 50 == 0:  # Decay learning rate
+            lr *= 0.75
+        # print(grad)
     x, y = points.T
     plt.scatter(x, y)
     plt.show()
     d = calc_discrepancy(list(points))
-    print(f'Discrepancy of 100 random points: {d}')
+    print(f'Discrepancy after min: {d}')
