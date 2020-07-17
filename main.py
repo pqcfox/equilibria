@@ -1,4 +1,6 @@
 import random
+from matplotlib import pyplot as plt
+import numpy as np
 
 
 def calc_discrepancy(points):
@@ -22,15 +24,14 @@ def calc_discrepancy(points):
     return d
 
 
-def generate_points(n):
-    points = []
-    for _ in range(n):
-        p = (random.random(), random.random())
-        points.append(p)
-    return points
+def generate_points(n, dimension=2):
+    return np.random.random((n, dimension))
 
 
 if __name__ == "__main__":
     points = generate_points(100)
-    d = calc_discrepancy(points)
+    x, y = points.T
+    plt.scatter(x, y)
+    plt.show()
+    d = calc_discrepancy(list(points))
     print(f'Discrepancy of 100 random points: {d}')
