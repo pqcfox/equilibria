@@ -3,6 +3,7 @@ import numpy as np
 import tqdm
 from log_sin_energy import LogSinEnergy
 from inv_distance_energy import InvSquareEnergy, InvDistanceEnergy
+from queen_solver import get_queen_solver_points
 
 
 def calc_discrepancy(points):
@@ -83,7 +84,9 @@ def display_energy_plot(energies):
 
 
 def main():
-    points, energy = generate_points_gradmethod(energy_method=InvSquareEnergy, num_iter=3000, init_lr=10**-5, decay_rate=1)
+    start_points = get_queen_solver_points(50)
+    points, energy = generate_points_gradmethod(start_points=start_points, init_lr=10**-5, decay_period=50, energy_sample_rate=10)
+    # points = generate_points(20)
     plt.figure(1)
     display_points(points)
     plt.figure(2)
