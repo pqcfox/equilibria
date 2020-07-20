@@ -1,9 +1,8 @@
-import random
 from matplotlib import pyplot as plt
 import numpy as np
-import energy_min
 import tqdm
-import time
+from log_sin_energy import LogSinEnergy
+from inv_distance_energy import InvSquareEnergy, InvDistanceEnergy
 
 
 def calc_discrepancy(points):
@@ -31,24 +30,66 @@ def generate_points(n, dimension=2):
     return np.random.random((n, dimension))
 
 
-if __name__ == "__main__":
-    points = generate_points(100)
+def generate_points_gradmethod(start_points=None, energy_method=LogSinEnergy,
+                               init_lr=0.000005, num_iter=300,
+                               decay_period=50, decay_rate=0.75,
+                               energy_sample_rate=50):
+    if start_points is None:
+        points = generate_points(100)  # Random initialization
+    else:
+        points = start_points
     d = calc_discrepancy(list(points))
-    print(f'Discrepancy of 100 random points: {d}')
+    print(f'Original discrepancy: {d}')
 
-    grad = np.mean(np.abs(energy_min.gradient(points)))
-    lr = 0.00005
+    grad = np.mean(np.abs(energy_method.gradient(points)))
+    lr = init_lr
     print("Approx magnitude of initial change", grad * lr)  # To sanity check the learning rate, should be < 1
+    print("Initial Energy", energy_method.energy(points))
 
-    for i in tqdm.tqdm(range(3000)):
-        grad = energy_min.gradient(points)
+    energy_samples = []
+
+    for i in tqdm.tqdm(range(num_iter)):
+        grad = energy_method.gradient(points)
         points += -lr * grad
         points = np.mod(points, 1)
-        if (i + 1) % 50 == 0:  # Decay learning rate
-            lr *= 0.75
-        # print(grad)
+        if (i + 1) % decay_period == 0:  # Decay learning rate
+            lr *= decay_rate
+        if i % energy_sample_rate == 0 or i + 1 == num_iter:
+            energy_samples.append((i, energy_method.energy(points)))
+
+    print("Final energy", energy_method.energy(points))
+    return points, energy_samples
+
+
+def gen_von_der_corupt(n=100):
+    byte_reverse = np.zeros(n)
+    for i in range(1, n+1):
+        x = bin(i)[2:]
+        byte_reverse[i - 1] = int(''.join(reversed(x)), 2) / (2 ** len(x))
+    points = np.array([np.arange(n) / n, byte_reverse]).T
+    return points
+
+
+def display_points(points):
+    d = calc_discrepancy(list(points))
+    print(f'Discrepancy: {d}')
     x, y = points.T
     plt.scatter(x, y)
+
+
+def display_energy_plot(energies):
+    x, y = [list(x) for x in zip(*energies)]
+    plt.plot(x, y)
+
+
+def main():
+    points, energy = generate_points_gradmethod(energy_method=InvSquareEnergy, num_iter=3000, init_lr=10**-5, decay_rate=1)
+    plt.figure(1)
+    display_points(points)
+    plt.figure(2)
+    display_energy_plot(energy)
     plt.show()
-    d = calc_discrepancy(list(points))
-    print(f'Discrepancy after min: {d}')
+
+
+if __name__ == "__main__":
+    main()
