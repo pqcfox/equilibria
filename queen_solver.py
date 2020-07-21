@@ -38,6 +38,12 @@ def get_queen_solver_points(N):
     return np.array([np.arange(N) / N, result / N]).T
 
 
+def random_permutation_points(N):
+    perm = np.arange(N) / N
+    np.random.shuffle(perm)
+    return np.array([np.arange(N) / N, perm]).T
+
+
 if __name__ == "__main__":
     board = np.ones((20, 20), dtype=bool)
     print(solve_queens_problem(board))
